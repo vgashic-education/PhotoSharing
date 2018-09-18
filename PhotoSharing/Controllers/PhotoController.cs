@@ -20,6 +20,20 @@ namespace PhotoSharing.Controllers
             return View(db.Photos.ToList());
         }
 
+
+		public ActionResult Display(int id)
+		{
+			Photo photo = db.Photos.Where(p => p.PhotoID == id).FirstOrDefault();
+
+			if (photo == null)
+			{
+				return HttpNotFound();
+			}
+
+			return View("Display", photo);
+		} 
+
+
         // GET: Photo/Details/5
         public ActionResult Details(int? id)
         {
@@ -35,11 +49,13 @@ namespace PhotoSharing.Controllers
             return View(photo);
         }
 
+
         // GET: Photo/Create
         public ActionResult Create()
         {
             return View();
         }
+
 
         // POST: Photo/Create
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
@@ -58,6 +74,7 @@ namespace PhotoSharing.Controllers
             return View(photo);
         }
 
+
         // GET: Photo/Edit/5
         public ActionResult Edit(int? id)
         {
@@ -72,6 +89,7 @@ namespace PhotoSharing.Controllers
             }
             return View(photo);
         }
+
 
         // POST: Photo/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
@@ -89,6 +107,7 @@ namespace PhotoSharing.Controllers
             return View(photo);
         }
 
+
         // GET: Photo/Delete/5
         public ActionResult Delete(int? id)
         {
@@ -103,6 +122,7 @@ namespace PhotoSharing.Controllers
             }
             return View(photo);
         }
+
 
         // POST: Photo/Delete/5
         [HttpPost, ActionName("Delete")]
