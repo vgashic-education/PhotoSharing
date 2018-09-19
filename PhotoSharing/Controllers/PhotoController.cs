@@ -1,29 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.Entity;
+﻿using PhotoSharing.Models;
+using System;
 using System.Linq;
-using System.Net;
 using System.Web;
 using System.Web.Mvc;
-using PhotoSharing.Models;
 
 namespace PhotoSharing.Controllers
 {
-    public class PhotoController : Controller
-    {
-        private PhotoSharingContext db = new PhotoSharingContext();
+	public class PhotoController : Controller
+	{
 
-        // GET: Photo
-        public ActionResult Index()
-        {
-            return View(db.Photos.ToList());
-        }
+		private PhotoSharingContext context = new PhotoSharingContext();
+
+		// GET: Photo
+		public ActionResult Index()
+		{
+			return View("Index", context.Photos.ToList());
+		}
 
 
 		public ActionResult Display(int id)
 		{
-			Photo photo = db.Photos.Where(p => p.PhotoID == id).FirstOrDefault();
+			Photo photo = context.Photos.Where(p => p.PhotoID == id).FirstOrDefault();
 
 			if (photo == null)
 			{
@@ -31,117 +28,90 @@ namespace PhotoSharing.Controllers
 			}
 
 			return View("Display", photo);
-		} 
+		}
 
 
-        // GET: Photo/Details/5
-        public ActionResult Details(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Photo photo = db.Photos.Find(id);
-            if (photo == null)
-            {
-                return HttpNotFound();
-            }
-            return View(photo);
-        }
+		[HttpGet]
+		public ActionResult Create()
+		{
+			Photo newPhoto = new Photo()
+			{
+				CreatedDate = DateTime.Now
+			};
+
+			return View("Create", newPhoto);
+		}
 
 
-        // GET: Photo/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
+		[HttpPost]
+		public ActionResult Create(Photo photo, HttpPostedFileBase image)
+		{
+			photo.CreatedDate = DateTime.Now;
+
+			if (!ModelState.IsValid)
+			{
+				return View("Create", photo);
+			}
+			else
+			{
+				if (image != null)
+				{
+					photo.ImageMimeType = image.ContentType;
+					photo.PhotoFile = new byte[image.ContentLength];
+
+					image.InputStream.Read(photo.PhotoFile, 0, image.ContentLength);
+				}
+
+				context.Photos.Add(photo);
+				context.SaveChanges();
+				return RedirectToAction("Index");
+			}
+		}
 
 
-        // POST: Photo/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "PhotoID,Title,PhotoFile,ImageMimeType,Description,CreatedDate,UserName")] Photo photo)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Photos.Add(photo);
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
+		[HttpGet]
+		public ActionResult Delete(int id)
+		{
+			Photo photo = context.Photos.Where(p => p.PhotoID == id).FirstOrDefault();
 
-            return View(photo);
-        }
+			if (photo == null)
+			{
+				return HttpNotFound();
+			}
+
+			return View("Delete", photo);
+		}
 
 
-        // GET: Photo/Edit/5
-        public ActionResult Edit(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Photo photo = db.Photos.Find(id);
-            if (photo == null)
-            {
-                return HttpNotFound();
-            }
-            return View(photo);
-        }
+		[HttpPost]
+		[ActionName("Delete")]
+		public ActionResult DeleteConfirmed(int id)
+		{
+			Photo photo = context.Photos.Where(p => p.PhotoID == id).FirstOrDefault();
+
+			if (photo == null)
+			{
+				return HttpNotFound();
+			}
+
+			context.Photos.Remove(photo);
+			context.SaveChanges();
+			return RedirectToAction("Index");
+		}
 
 
-        // POST: Photo/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "PhotoID,Title,PhotoFile,ImageMimeType,Description,CreatedDate,UserName")] Photo photo)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Entry(photo).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-            return View(photo);
-        }
+		public FileContentResult GetImage(int id)
+		{
+			Photo photo = context.Photos.Where(p => p.PhotoID == id).FirstOrDefault();
 
-
-        // GET: Photo/Delete/5
-        public ActionResult Delete(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Photo photo = db.Photos.Find(id);
-            if (photo == null)
-            {
-                return HttpNotFound();
-            }
-            return View(photo);
-        }
-
-
-        // POST: Photo/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
-        {
-            Photo photo = db.Photos.Find(id);
-            db.Photos.Remove(photo);
-            db.SaveChanges();
-            return RedirectToAction("Index");
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-    }
+			if (photo != null)
+			{
+				return File(photo.PhotoFile, photo.ImageMimeType);
+			}
+			else
+			{
+				return null;
+			}
+		}
+	}
 }
