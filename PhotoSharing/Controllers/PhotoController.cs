@@ -6,10 +6,12 @@ using System.Web.Mvc;
 
 namespace PhotoSharing.Controllers
 {
+	[ValueReporter]
 	public class PhotoController : Controller
 	{
 
 		private PhotoSharingContext context = new PhotoSharingContext();
+
 
 		// GET: Photo
 		public ActionResult Index()
